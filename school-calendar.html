@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>School Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #1a5c3a;
+    --primary-light: #e8f5ee;
+    --primary-mid: #2d7a50;
+    --accent: #e8a020;
+    --accent-light: #fef3dc;
+    --text: #1c1c1c;
+    --text-muted: #5a5a5a;
+    --border: #e0e0e0;
+    --bg: #f7f6f2;
+    --white: #ffffff;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  header {
+    background: var(--primary); color: white;
+    padding: 1.25rem 1.5rem; position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; gap: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .header-logo {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600;
+    flex-shrink: 0; cursor: pointer;
+  }
+  .header-text h1 { font-family: 'Fraunces', serif; font-size: 1.15rem; font-weight: 600; letter-spacing: -0.01em; cursor: pointer; }
+  .header-text p  { font-size: 0.78rem; opacity: 0.75; margin-top: 1px; }
+  .header-year-badge {
+    margin-left: auto; background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25); border-radius: 20px;
+    padding: 4px 14px; font-size: 0.82rem; font-weight: 500; white-space: nowrap;
+  }
+
+  #view-calendar { display: block; }
+  #view-event    { display: none; }
+
+  #cal-main { max-width: 720px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+  .today-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--accent-light); color: #7a4a00;
+    border: 1px solid #f0c060; border-radius: 20px;
+    padding: 5px 14px; font-size: 0.82rem; font-weight: 500; margin-bottom: 1.25rem;
+  }
+  .today-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+
+  /* Loading / error states */
+  .state-box {
+    background: var(--white); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 2.5rem 1.5rem;
+    text-align: center; margin-bottom: 1.25rem;
+  }
+  .state-box .icon { font-size: 2rem; margin-bottom: 0.75rem; }
+  .state-box h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; }
+  .state-box p  { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
+  .state-box a  { color: var(--primary); }
+  .spinner {
+    width: 28px; height: 28px; border: 3px solid var(--border);
+    border-top-color: var(--primary); border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 0 auto 1rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .month-block { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 1.25rem; overflow: hidden; }
+  .month-block.current-month { border-color: var(--primary-mid); box-shadow: 0 0 0 3px rgba(45,122,80,0.12); }
+  .month-header { display: flex; align-items: center; padding: 0.9rem 1.25rem; border-bottom: 1px solid var(--border); gap: 10px; }
+  .month-header.current-month-header { background: var(--primary); color: white; border-bottom-color: transparent; }
+  .month-label { font-family: 'Fraunces', serif; font-size: 1.1rem; font-weight: 600; letter-spacing: -0.01em; }
+  .month-header.current-month-header .month-label { color: white; }
+  .current-badge { background: var(--accent); color: #3a1f00; font-size: 0.7rem; font-weight: 600; padding: 2px 9px; border-radius: 12px; letter-spacing: 0.03em; text-transform: uppercase; }
+  .month-count { margin-left: auto; font-size: 0.78rem; opacity: 0.6; }
+
+  .cal-grid { padding: 0.75rem 1rem 1rem; }
+  .cal-dow { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 4px; }
+  .cal-dow span { text-align: center; font-size: 0.7rem; font-weight: 600; color: var(--text-muted); padding: 4px 0; text-transform: uppercase; letter-spacing: 0.04em; }
+  .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .cal-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; cursor: default; font-size: 0.88rem; transition: background 0.15s; min-width: 0; padding: 2px; }
+  .cal-day.empty { background: none; }
+  .cal-day.has-event { cursor: pointer; }
+  .cal-day.has-event:hover { background: var(--primary-light); }
+  .cal-day.today { background: var(--primary) !important; color: white !important; font-weight: 600; }
+  .cal-day.today .event-dots span { background: white !important; }
+  .cal-day.sunday { color: #c0392b; }
+  .cal-day.saturday { color: #2471a3; }
+  .cal-day.past { opacity: 0.4; }
+  .cal-day.no-class { background: #fdecea; }
+  .cal-day.no-class .day-num { text-decoration: line-through; opacity: 0.5; }
+  .day-num { font-size: 0.85rem; line-height: 1; }
+  .event-dots { display: flex; gap: 2px; margin-top: 2px; }
+  .event-dots span { width: 4px; height: 4px; border-radius: 50%; }
+  .dot-holiday{background:#e74c3c} .dot-exam{background:#8e44ad}
+  .dot-activity{background:#e67e22} .dot-meeting{background:#2980b9} .dot-other{background:#27ae60}
+
+  .events-section { border-top: 1px solid var(--border); padding: 0.75rem 1.25rem 1rem; }
+  .events-section h3 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; margin-bottom: 0.6rem; }
+  .event-item { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f0f0f0; cursor: pointer; border-radius: 6px; transition: background 0.12s; }
+  .event-item:last-child { border-bottom: none; }
+  .event-item:hover { background: var(--primary-light); padding-left: 6px; padding-right: 6px; margin: 0 -6px; }
+  .event-date-badge { min-width: 36px; text-align: center; background: var(--primary-light); border-radius: 6px; padding: 3px 4px; font-size: 0.72rem; font-weight: 600; color: var(--primary); line-height: 1.3; flex-shrink: 0; }
+  .event-info { flex: 1; }
+  .event-title { font-size: 0.88rem; font-weight: 500; line-height: 1.3; }
+  .event-desc  { font-size: 0.78rem; color: var(--text-muted); margin-top: 1px; }
+  .event-tag { font-size: 0.68rem; font-weight: 600; padding: 2px 7px; border-radius: 8px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.03em; }
+  .tag-holiday{background:#fde8e8;color:#a93226} .tag-exam{background:#f0e6f6;color:#6c3483}
+  .tag-activity{background:#fef0e0;color:#a04000} .tag-meeting{background:#dbeeff;color:#1a5276} .tag-other{background:#e8f8f0;color:#1e6639}
+  .event-arrow { font-size: 0.8rem; color: var(--text-muted); align-self: center; flex-shrink: 0; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; padding: 1rem 1.25rem; border-top: 1px solid var(--border); background: var(--bg); }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; color: var(--text-muted); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  footer { text-align: center; padding: 2rem 1rem; font-size: 0.78rem; color: var(--text-muted); border-top: 1px solid var(--border); }
+  footer strong { color: var(--primary); }
+
+  /* ---- EVENT DETAIL ---- */
+  #ev-main { max-width: 720px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  .back-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 7px 16px; font-size: 0.85rem; font-weight: 500; color: var(--text); cursor: pointer; transition: background 0.12s, border-color 0.12s; margin-bottom: 1.5rem; }
+  .back-btn:hover { background: var(--primary-light); border-color: var(--primary-mid); color: var(--primary); }
+  .ev-card { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+  .ev-banner { padding: 1.75rem 1.5rem 1.5rem; border-bottom: 1px solid var(--border); }
+  .ev-banner.type-holiday{background:#fff1f0;border-bottom-color:#fcc}
+  .ev-banner.type-exam{background:#f8f0ff;border-bottom-color:#e0c8ff}
+  .ev-banner.type-activity{background:#fff8ee;border-bottom-color:#fde0a8}
+  .ev-banner.type-meeting{background:#eff6ff;border-bottom-color:#bcd9ff}
+  .ev-banner.type-other{background:#f0faf4;border-bottom-color:#b8e8cc}
+  .ev-type-pill { display: inline-block; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 10px; border-radius: 12px; margin-bottom: 0.75rem; }
+  .ev-title { font-family: 'Fraunces', serif; font-size: 1.6rem; font-weight: 600; line-height: 1.2; letter-spacing: -0.02em; color: var(--text); }
+  .ev-date-line { margin-top: 0.6rem; font-size: 0.88rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+  .ev-body { padding: 1.25rem 1.5rem; }
+  .ev-row { display: flex; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid #f2f2f2; align-items: flex-start; }
+  .ev-row:last-child { border-bottom: none; }
+  .ev-row-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); min-width: 90px; padding-top: 2px; flex-shrink: 0; }
+  .ev-row-value { font-size: 0.92rem; color: var(--text); line-height: 1.6; flex: 1; }
+  .ev-row-value.details-text { white-space: pre-wrap; font-size: 0.9rem; line-height: 1.75; }
+  .no-class-notice { display: inline-flex; align-items: center; gap: 6px; background: #fdecea; color: #922b21; border: 1px solid #f1948a; border-radius: 8px; padding: 6px 12px; font-size: 0.82rem; font-weight: 500; }
+  .ev-related { padding: 1rem 1.5rem 1.25rem; border-top: 1px solid var(--border); }
+  .ev-related h4 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600; margin-bottom: 0.6rem; }
+  .ev-related-item { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 8px; cursor: pointer; transition: background 0.12s; }
+  .ev-related-item:hover { background: var(--primary-light); }
+  .ev-related-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .ev-related-title { font-size: 0.88rem; flex: 1; }
+  .ev-related-arrow { font-size: 0.8rem; color: var(--text-muted); }
+
+  @media (max-width: 480px) {
+    header { padding: 1rem; }
+    #cal-main, #ev-main { padding: 1rem 0.5rem 2rem; }
+    .cal-grid { padding: 0.5rem 0.5rem 0.75rem; }
+    .events-section, .month-header { padding: 0.75rem; }
+    .ev-banner { padding: 1.25rem 1rem 1rem; }
+    .ev-body, .ev-related { padding: 1rem; }
+    .ev-title { font-size: 1.3rem; }
+    .ev-row { flex-direction: column; gap: 2px; }
+    .ev-row-label { min-width: unset; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     STEP 1 — EDIT YOUR SCHOOL INFO HERE
+     ============================================================ -->
+<script>
+const SCHOOL_NAME     = "Unida Christian Colleges";
+const SCHOOL_SUBTITLE = "School Year 2025–2026 Calendar";
+const SCHOOL_INITIALS = "UCC";
+</script>
+
+<!-- ============================================================
+     STEP 2 — PASTE YOUR GOOGLE SHEET CSV URL HERE
+     (See setup instructions below the code)
+     ============================================================ -->
+<script>
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vReSbOIovR-_d29PMqsaywF5dxz230siBQCXuQuvoao-ctt_tzgKTJtT3AIt_KmUs7WsTDaBKL7wjib/pub?gid=0&single=true&output=csv";
+</script>
+
+<!-- ============================================================
+     STEP 3 — SET WHICH MONTHS TO SHOW (YYYY-MM)
+     ============================================================ -->
+<script>
+const MONTHS_TO_SHOW = [
+  "2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12",
+  "2026-01","2026-02","2026-03","2026-04","2026-05",
+];
+</script>
+
+<!-- ============================================================
+     HTML — DO NOT EDIT BELOW
+     ============================================================ -->
+
+<header>
+  <div class="header-logo" id="hdr-initials" onclick="goHome()"></div>
+  <div class="header-text">
+    <h1 id="hdr-name" onclick="goHome()"></h1>
+    <p id="hdr-sub"></p>
+  </div>
+  <div class="header-year-badge" id="hdr-year"></div>
+</header>
+
+<div id="view-calendar">
+  <main id="cal-main">
+    <div class="today-chip">
+      <div class="today-dot"></div>
+      <span id="today-label"></span>
+    </div>
+    <div id="calendar-feed"></div>
+  </main>
+  <footer>
+    <p>© <span id="footer-year"></span> <strong id="footer-name"></strong> — School Events Calendar</p>
+    <p style="margin-top:4px;opacity:0.6;">For concerns, contact the school registrar's office.</p>
+  </footer>
+</div>
+
+<div id="view-event">
+  <main id="ev-main">
+    <button class="back-btn" onclick="goBack()">← Back to Calendar</button>
+    <div class="ev-card" id="ev-card"></div>
+  </main>
+</div>
+
+<script>
+// ---- Static text ----
+document.getElementById('hdr-initials').textContent = SCHOOL_INITIALS;
+document.getElementById('hdr-name').textContent     = SCHOOL_NAME;
+document.getElementById('hdr-sub').textContent      = SCHOOL_SUBTITLE;
+document.getElementById('hdr-year').textContent     = SCHOOL_SUBTITLE;
+document.getElementById('footer-name').textContent  = SCHOOL_NAME;
+document.getElementById('footer-year').textContent  = new Date().getFullYear();
+
+const today = new Date();
+today.setHours(0,0,0,0);
+const todayStr = today.toISOString().slice(0,10);
+
+document.getElementById('today-label').textContent =
+  "Today: " + today.toLocaleDateString('en-PH', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+// ---- Constants ----
+const typeColors = { holiday:'dot-holiday', exam:'dot-exam', activity:'dot-activity', meeting:'dot-meeting', other:'dot-other' };
+const tagClass   = { holiday:'tag-holiday', exam:'tag-exam', activity:'tag-activity', meeting:'tag-meeting', other:'tag-other' };
+const typeLabel  = { holiday:'Holiday', exam:'Exam', activity:'Activity', meeting:'Meeting', other:'Info' };
+const typeIcon   = { holiday:'🎌', exam:'📝', activity:'🎉', meeting:'👥', other:'📌' };
+const DAYS        = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ---- Navigation ----
+let scrollPos = 0;
+function openEvent(ev) {
+  scrollPos = window.scrollY;
+  renderEventDetail(ev);
+  document.getElementById('view-calendar').style.display = 'none';
+  document.getElementById('view-event').style.display   = 'block';
+  window.scrollTo(0, 0);
+}
+function goBack() {
+  document.getElementById('view-event').style.display   = 'none';
+  document.getElementById('view-calendar').style.display = 'block';
+  window.scrollTo(0, scrollPos);
+}
+function goHome() {
+  document.getElementById('view-event').style.display   = 'none';
+  document.getElementById('view-calendar').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+// ---- CSV Parser ----
+// Handles quoted fields (commas and newlines inside quotes)
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], n = text[i+1];
+    if (inQ) {
+      if (c === '"' && n === '"') { field += '"'; i++; }
+      else if (c === '"') inQ = false;
+      else field += c;
+    } else {
+      if (c === '"') inQ = true;
+      else if (c === ',') { row.push(field.trim()); field = ''; }
+      else if (c === '\n' || (c === '\r' && n === '\n')) {
+        row.push(field.trim()); field = '';
+        if (row.some(f => f)) rows.push(row);
+        row = [];
+        if (c === '\r') i++;
+      } else field += c;
+    }
+  }
+  row.push(field.trim());
+  if (row.some(f => f)) rows.push(row);
+  return rows;
+}
+
+function csvToEvents(csv) {
+  const rows = parseCSV(csv);
+  if (rows.length < 2) return { events: [], noClass: [] };
+
+  // Normalize header names: lowercase, trim
+  const headers = rows[0].map(h => h.toLowerCase().trim());
+  const col = name => headers.indexOf(name);
+
+  const iDate     = col('date');
+  const iTitle    = col('title');
+  const iDesc     = col('desc');
+  const iType     = col('type');
+  const iDetails  = col('details');
+  const iTime     = col('time');
+  const iVenue    = col('venue');
+  const iAudience = col('audience');
+  const iContact  = col('contact');
+  const iNoClass  = col('no_class');  // "yes" or "1" marks no-class dates
+
+  const events = [], noClass = [];
+
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    const date = iDate >= 0 ? r[iDate] : '';
+    if (!date || !date.match(/^\d{4}-\d{2}-\d{2}$/)) continue;
+
+    const ev = {
+      date,
+      title:    iTitle    >= 0 ? r[iTitle]    : '',
+      desc:     iDesc     >= 0 ? r[iDesc]     : '',
+      type:     iType     >= 0 ? r[iType].toLowerCase() : 'other',
+      details:  iDetails  >= 0 ? r[iDetails]  : '',
+      time:     iTime     >= 0 ? r[iTime]     : '',
+      venue:    iVenue    >= 0 ? r[iVenue]    : '',
+      audience: iAudience >= 0 ? r[iAudience] : '',
+      contact:  iContact  >= 0 ? r[iContact]  : '',
+    };
+
+    if (ev.title) events.push(ev);
+
+    // Mark no-class if the no_class column says yes/1/true
+    if (iNoClass >= 0) {
+      const v = r[iNoClass].toLowerCase().trim();
+      if (v === 'yes' || v === '1' || v === 'true') noClass.push(date);
+    }
+  }
+
+  return { events, noClass };
+}
+
+// ---- Event Detail ----
+function renderEventDetail(ev) {
+  const card = document.getElementById('ev-card');
+  const dateObj = new Date(ev.date + 'T00:00:00');
+  const fullDate = dateObj.toLocaleDateString('en-PH', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  const isNoClass = noClassSet.has(ev.date);
+  const sameDay   = (eventsByDate[ev.date] || []).filter(e => e.title !== ev.title);
+
+  let rows = '';
+  if (ev.time)     rows += infoRow('Time', ev.time);
+  if (ev.venue)    rows += infoRow('Venue', ev.venue);
+  if (ev.audience) rows += infoRow('For', ev.audience);
+  if (ev.contact)  rows += infoRow('Contact', ev.contact);
+  if (isNoClass)   rows += `<div class="ev-row"><div class="ev-row-label">Classes</div><div class="ev-row-value"><span class="no-class-notice">🚫 No classes on this date</span></div></div>`;
+  if (ev.desc && !ev.details) rows += infoRow('Summary', ev.desc);
+  if (ev.details)  rows += `<div class="ev-row"><div class="ev-row-label">Details</div><div class="ev-row-value details-text">${escHtml(ev.details)}</div></div>`;
+
+  let related = '';
+  if (sameDay.length) {
+    related = `<div class="ev-related"><h4>Also on this date</h4>` +
+      sameDay.map(e => `<div class="ev-related-item" onclick='openEvent(${JSON.stringify(e)})'><div class="ev-related-dot ${typeColors[e.type]||'dot-other'}"></div><span class="ev-related-title">${escHtml(e.title)}</span><span class="ev-related-arrow">›</span></div>`).join('') +
+    `</div>`;
+  }
+
+  card.innerHTML = `
+    <div class="ev-banner type-${ev.type||'other'}">
+      <div class="ev-type-pill ${tagClass[ev.type]||'tag-other'}">${typeIcon[ev.type]||'📌'} ${typeLabel[ev.type]||'Info'}</div>
+      <div class="ev-title">${escHtml(ev.title)}</div>
+      <div class="ev-date-line">📅 ${fullDate}</div>
+    </div>
+    ${rows ? `<div class="ev-body">${rows}</div>` : ''}
+    ${related}
+  `;
+}
+
+function infoRow(label, value) {
+  return `<div class="ev-row"><div class="ev-row-label">${label}</div><div class="ev-row-value">${escHtml(value)}</div></div>`;
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+}
+
+// ---- Calendar Builder ----
+let eventsByDate = {}, noClassSet = new Set();
+
+function buildMonth(ym) {
+  const [y, m] = ym.split('-').map(Number);
+  const isCurrentMonth = (today.getFullYear() === y && today.getMonth() === m - 1);
+  const firstDay = new Date(y, m - 1, 1).getDay();
+  const daysInMonth = new Date(y, m, 0).getDate();
+
+  const monthEvents = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    if (eventsByDate[ds]) eventsByDate[ds].forEach(e => monthEvents.push({day:d,...e}));
+  }
+
+  const block = document.createElement('div');
+  block.className = 'month-block' + (isCurrentMonth ? ' current-month' : '');
+
+  const hdr = document.createElement('div');
+  hdr.className = 'month-header' + (isCurrentMonth ? ' current-month-header' : '');
+  hdr.innerHTML = `
+    <span class="month-label">${MONTHS_LONG[m-1]} ${y}</span>
+    ${isCurrentMonth ? '<span class="current-badge">This Month</span>' : ''}
+    ${monthEvents.length ? `<span class="month-count">${monthEvents.length} event${monthEvents.length>1?'s':''}</span>` : ''}
+  `;
+  block.appendChild(hdr);
+
+  const grid = document.createElement('div');
+  grid.className = 'cal-grid';
+  const dowRow = document.createElement('div');
+  dowRow.className = 'cal-dow';
+  DAYS.forEach(d => { const s = document.createElement('span'); s.textContent = d; dowRow.appendChild(s); });
+  grid.appendChild(dowRow);
+
+  const daysRow = document.createElement('div');
+  daysRow.className = 'cal-days';
+  for (let i = 0; i < firstDay; i++) { const e = document.createElement('div'); e.className='cal-day empty'; daysRow.appendChild(e); }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayDate = new Date(y, m-1, d);
+    const dow = dayDate.getDay();
+    const evts = eventsByDate[ds] || [];
+    const cell = document.createElement('div');
+    let cls = 'cal-day';
+    if (dow===0) cls += ' sunday';
+    if (dow===6) cls += ' saturday';
+    if (dayDate < today && ds !== todayStr) cls += ' past';
+    if (ds === todayStr) cls += ' today';
+    if (noClassSet.has(ds) && ds !== todayStr) cls += ' no-class';
+    if (evts.length) cls += ' has-event';
+    cell.className = cls;
+    cell.innerHTML = `<span class="day-num">${d}</span>`;
+    if (evts.length) {
+      const dots = document.createElement('div');
+      dots.className = 'event-dots';
+      evts.slice(0,3).forEach(ev => { const dot=document.createElement('span'); dot.className=typeColors[ev.type]||'dot-other'; dots.appendChild(dot); });
+      cell.appendChild(dots);
+      cell.title = evts.map(e=>e.title).join(' • ');
+      cell.addEventListener('click', () => { if(evts.length===1) openEvent(evts[0]); else { const a=document.getElementById('ev-anchor-'+ds); if(a) a.scrollIntoView({behavior:'smooth',block:'center'}); } });
+    }
+    daysRow.appendChild(cell);
+  }
+  grid.appendChild(daysRow);
+  block.appendChild(grid);
+
+  if (monthEvents.length) {
+    const evSection = document.createElement('div');
+    evSection.className = 'events-section';
+    evSection.innerHTML = '<h3>Events This Month</h3>';
+    monthEvents.forEach(ev => {
+      const dayDate = new Date(y,m-1,ev.day);
+      const dayName = dayDate.toLocaleDateString('en-PH',{weekday:'short'});
+      const item = document.createElement('div');
+      item.className = 'event-item';
+      item.id = 'ev-anchor-' + ev.date;
+      item.innerHTML = `
+        <div class="event-date-badge">${String(ev.day).padStart(2,'0')}<br>${dayName}</div>
+        <div class="event-info">
+          <div class="event-title">${escHtml(ev.title)}</div>
+          ${ev.desc ? `<div class="event-desc">${escHtml(ev.desc)}</div>` : ''}
+        </div>
+        <span class="event-tag ${tagClass[ev.type]||'tag-other'}">${typeLabel[ev.type]||'Info'}</span>
+        <span class="event-arrow">›</span>
+      `;
+      item.addEventListener('click', () => openEvent(ev));
+      evSection.appendChild(item);
+    });
+    block.appendChild(evSection);
+  }
+  return block;
+}
+
+function renderCalendar() {
+  const feed = document.getElementById('calendar-feed');
+  feed.innerHTML = '';
+  const todayYM = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+  const currentIdx = MONTHS_TO_SHOW.indexOf(todayYM);
+  let ordered;
+  if (currentIdx === -1) {
+    ordered = MONTHS_TO_SHOW.filter(ym => ym >= todayYM);
+    if (!ordered.length) ordered = MONTHS_TO_SHOW;
+  } else {
+    ordered = [MONTHS_TO_SHOW[currentIdx], ...MONTHS_TO_SHOW.slice(currentIdx + 1)];
+  }
+  ordered.forEach(ym => feed.appendChild(buildMonth(ym)));
+
+  const legend = document.createElement('div');
+  legend.className = 'legend';
+  legend.innerHTML = Object.entries(typeLabel).map(([k,v]) =>
+    `<div class="legend-item"><div class="legend-dot ${typeColors[k]}"></div><span>${v}</span></div>`
+  ).join('') + `<div class="legend-item"><div class="legend-dot" style="background:#fdecea;border:1px solid #e74c3c;"></div><span>No Class</span></div>`;
+  feed.appendChild(legend);
+}
+
+// ---- Show loading state ----
+function showLoading() {
+  document.getElementById('calendar-feed').innerHTML = `
+    <div class="state-box">
+      <div class="spinner"></div>
+      <h3>Loading events…</h3>
+      <p>Fetching your Google Sheet.</p>
+    </div>`;
+}
+
+// ---- Show error state ----
+function showError(msg) {
+  document.getElementById('calendar-feed').innerHTML = `
+    <div class="state-box">
+      <div class="icon">⚠️</div>
+      <h3>Could not load events</h3>
+      <p>${msg}</p>
+    </div>`;
+}
+
+// ---- Show setup guide (no URL set yet) ----
+function showSetupGuide() {
+  document.getElementById('calendar-feed').innerHTML = `
+    <div class="state-box" style="text-align:left;max-width:560px;margin:0 auto;">
+      <div style="font-size:1.8rem;margin-bottom:0.75rem;">📋</div>
+      <h3 style="margin-bottom:1rem;">Connect your Google Sheet</h3>
+      <p style="margin-bottom:1rem;">Follow these steps once, then just edit your sheet forever:</p>
+      <ol style="padding-left:1.25rem;font-size:0.88rem;color:var(--text);line-height:2;">
+        <li>Open <a href="https://sheets.google.com" target="_blank">Google Sheets</a> and create a new sheet.</li>
+        <li>Set the <strong>first row</strong> as headers (exact spelling matters):<br>
+          <code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:0.82rem;">date, title, desc, type, time, venue, audience, contact, details, no_class</code>
+        </li>
+        <li>Fill in your events — one row per event. See column guide below.</li>
+        <li>Click <strong>File → Share → Publish to web</strong>.</li>
+        <li>Under "Link", choose the sheet name and select <strong>Comma-separated values (.csv)</strong>.</li>
+        <li>Click <strong>Publish</strong> and copy the URL.</li>
+        <li>Open this HTML file, find <code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;">PASTE_YOUR_CSV_URL_HERE</code> and replace it with your URL.</li>
+      </ol>
+      <hr style="margin:1.25rem 0;border:none;border-top:1px solid var(--border);">
+      <p style="font-size:0.82rem;font-weight:600;margin-bottom:0.5rem;">Column guide:</p>
+      <table style="font-size:0.8rem;width:100%;border-collapse:collapse;">
+        <tr style="background:#f7f6f2;"><th style="padding:5px 8px;text-align:left;border:1px solid var(--border);">Column</th><th style="padding:5px 8px;text-align:left;border:1px solid var(--border);">Required?</th><th style="padding:5px 8px;text-align:left;border:1px solid var(--border);">Example</th></tr>
+        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>date</code></td><td style="padding:5px 8px;border:1px solid var(--border);">✅ Yes</td><td style="padding:5px 8px;border:1px solid var(--border);">2026-03-15</td></tr>
+        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>title</code></td><td style="padding:5px 8px;border:1px solid var(--border);">✅ Yes</td><td style="padding:5px 8px;border:1px solid var(--border);">Science Fair</td></tr>
+        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>type</code></td><td style="padding:5px 8px;border:1px solid var(--border);">✅ Yes</td><td style="padding:5px 8px;border:1px solid var(--border);">holiday / exam / activity / meeting / other</td></tr>
+        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>desc</code></td><td style="padding:5px 8px;border:1px solid var(--border);">Optional</td><td style="padding:5px 8px;border:1px solid var(--border);">Short one-liner for the list</td></tr>
+        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>time</code></td><td style="padding:5px 8px;border:1px solid var(--border);">Optional</td><td style="padding:5px 8px;border:1px solid var(--border);">8:00 AM – 12:00 PM</td></tr>
+        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>venue</code></td><td style="padding:5px 8px;border:1px solid var(--border);">Optional</td><td style="padding:5px 8px;border:1px solid var(--border);">Covered Court</td></tr>
+        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>audience</code></td><td style="padding:5px 8px;border:1px solid var(--border);">Optional</td><td style="padding:5px 8px;border:1px solid var(--border);">All Grade Levels</td></tr>
+        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>contact</code></td><td style="padding:5px 8px;border:1px solid var(--border);">Optional</td><td style="padding:5px 8px;border:1px solid var(--border);">Guidance Office</td></tr>
+        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>details</code></td><td style="padding:5px 8px;border:1px solid var(--border);">Optional</td><td style="padding:5px 8px;border:1px solid var(--border);">Long description for the detail page</td></tr>
+        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>no_class</code></td><td style="padding:5px 8px;border:1px solid var(--border);">Optional</td><td style="padding:5px 8px;border:1px solid var(--border);">yes (or leave blank)</td></tr>
+      </table>
+    </div>`;
+}
+
+// ---- Main: load from Google Sheet ----
+async function init() {
+  if (!SHEET_CSV_URL || SHEET_CSV_URL === 'PASTE_YOUR_CSV_URL_HERE') {
+    showSetupGuide();
+    return;
+  }
+
+  showLoading();
+
+  try {
+    const res = await fetch(SHEET_CSV_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const csv = await res.text();
+    const { events, noClass } = csvToEvents(csv);
+
+    if (!events.length) {
+      showError('Your sheet loaded but no valid events were found. Make sure your header row uses the exact column names shown in the setup guide.');
+      return;
+    }
+
+    // Build lookup maps
+    events.forEach(e => {
+      if (!eventsByDate[e.date]) eventsByDate[e.date] = [];
+      eventsByDate[e.date].push(e);
+    });
+    noClassSet = new Set(noClass);
+
+    renderCalendar();
+
+  } catch (err) {
+    showError(
+      `Could not fetch the sheet. Common causes:<br><br>
+      • The CSV URL is wrong or not yet published<br>
+      • You published the sheet but selected the wrong format (must be <strong>CSV</strong>, not HTML)<br>
+      • A browser extension is blocking the request<br><br>
+      Error: <code>${err.message}</code>`
+    );
+  }
+}
+
+init();
+</script>
+</body>
+</html>
