@@ -56,6 +56,42 @@
   }
   .today-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
 
+  /* ---- MONTH NAVIGATION ---- */
+  .month-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1rem; gap: 0.75rem;
+  }
+  .nav-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--white);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+    flex-shrink: 0; color: var(--text);
+  }
+  .nav-btn:hover:not(:disabled) { background: var(--primary-light); border-color: var(--primary-mid); color: var(--primary); }
+  .nav-btn:disabled { opacity: 0.25; cursor: default; }
+  .nav-month-label {
+    flex: 1; text-align: center;
+    font-family: 'Fraunces', serif;
+    font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em;
+  }
+  .nav-month-label .nav-year {
+    display: block; font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem; font-weight: 500; color: var(--text-muted);
+    margin-top: 1px; letter-spacing: 0;
+  }
+  .nav-dots {
+    display: flex; justify-content: center; gap: 5px; margin-bottom: 1.25rem;
+  }
+  .nav-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--border); cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+  }
+  .nav-dot.active { background: var(--primary); transform: scale(1.3); }
+
   /* Loading / error states */
   .state-box {
     background: var(--white); border-radius: var(--radius);
@@ -73,14 +109,15 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .month-block { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 1.25rem; overflow: hidden; }
+  /* ---- MONTH BLOCK ---- */
+  .month-block {
+    background: var(--white); border-radius: var(--radius);
+    border: 1px solid var(--border); margin-bottom: 1.25rem;
+    overflow: hidden;
+    animation: fadeIn 0.18s ease;
+  }
   .month-block.current-month { border-color: var(--primary-mid); box-shadow: 0 0 0 3px rgba(45,122,80,0.12); }
-  .month-header { display: flex; align-items: center; padding: 0.9rem 1.25rem; border-bottom: 1px solid var(--border); gap: 10px; }
-  .month-header.current-month-header { background: var(--primary); color: white; border-bottom-color: transparent; }
-  .month-label { font-family: 'Fraunces', serif; font-size: 1.1rem; font-weight: 600; letter-spacing: -0.01em; }
-  .month-header.current-month-header .month-label { color: white; }
-  .current-badge { background: var(--accent); color: #3a1f00; font-size: 0.7rem; font-weight: 600; padding: 2px 9px; border-radius: 12px; letter-spacing: 0.03em; text-transform: uppercase; }
-  .month-count { margin-left: auto; font-size: 0.78rem; opacity: 0.6; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
   .cal-grid { padding: 0.75rem 1rem 1rem; }
   .cal-dow { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 4px; }
@@ -116,8 +153,9 @@
   .tag-holiday{background:#fde8e8;color:#a93226} .tag-exam{background:#f0e6f6;color:#6c3483}
   .tag-activity{background:#fef0e0;color:#a04000} .tag-meeting{background:#dbeeff;color:#1a5276} .tag-other{background:#e8f8f0;color:#1e6639}
   .event-arrow { font-size: 0.8rem; color: var(--text-muted); align-self: center; flex-shrink: 0; }
+  .no-events-msg { padding: 1.25rem; text-align: center; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--border); }
 
-  .legend { display: flex; flex-wrap: wrap; gap: 10px; padding: 1rem 1.25rem; border-top: 1px solid var(--border); background: var(--bg); }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; padding: 1rem 1.25rem; border-top: 1px solid var(--border); background: var(--bg); border-radius: 0 0 var(--radius) var(--radius); }
   .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; color: var(--text-muted); }
   .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
 
@@ -157,7 +195,8 @@
     header { padding: 1rem; }
     #cal-main, #ev-main { padding: 1rem 0.5rem 2rem; }
     .cal-grid { padding: 0.5rem 0.5rem 0.75rem; }
-    .events-section, .month-header { padding: 0.75rem; }
+    .events-section { padding: 0.75rem; }
+    .nav-month-label { font-size: 1.05rem; }
     .ev-banner { padding: 1.25rem 1rem 1rem; }
     .ev-body, .ev-related { padding: 1rem; }
     .ev-title { font-size: 1.3rem; }
@@ -179,7 +218,6 @@ const SCHOOL_INITIALS = "UCC";
 
 <!-- ============================================================
      STEP 2 — PASTE YOUR GOOGLE SHEET CSV URL HERE
-     (See setup instructions below the code)
      ============================================================ -->
 <script>
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vReSbOIovR-_d29PMqsaywF5dxz230siBQCXuQuvoao-ctt_tzgKTJtT3AIt_KmUs7WsTDaBKL7wjib/pub?gid=0&single=true&output=csv";
@@ -190,7 +228,7 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vReSbOIov
      ============================================================ -->
 <script>
 const MONTHS_TO_SHOW = [
-   "2026-05","2026-06","2026-07","2026-08","2026-09","2026-10","2026-11","2026-12"
+  "2026-05","2026-06","2026-07","2026-08","2026-09","2026-10","2026-11","2026-12"
 ];
 </script>
 
@@ -213,6 +251,21 @@ const MONTHS_TO_SHOW = [
       <div class="today-dot"></div>
       <span id="today-label"></span>
     </div>
+
+    <!-- Month navigation -->
+    <div class="month-nav">
+      <button class="nav-btn" id="btn-prev" onclick="changeMonth(-1)" title="Previous month">&#8592;</button>
+      <div class="nav-month-label">
+        <span id="nav-month-name"></span>
+        <span class="nav-year" id="nav-year"></span>
+      </div>
+      <button class="nav-btn" id="btn-next" onclick="changeMonth(1)" title="Next month">&#8594;</button>
+    </div>
+
+    <!-- Dot indicators -->
+    <div class="nav-dots" id="nav-dots"></div>
+
+    <!-- Single month display -->
     <div id="calendar-feed"></div>
   </main>
   <footer>
@@ -252,6 +305,10 @@ const typeIcon   = { holiday:'🎌', exam:'📝', activity:'🎉', meeting:'👥
 const DAYS        = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
+// ---- Month index state ----
+let currentMonthIdx = 0;   // index into orderedMonths
+let orderedMonths = [];    // final display order
+
 // ---- Navigation ----
 let scrollPos = 0;
 function openEvent(ev) {
@@ -272,8 +329,14 @@ function goHome() {
   window.scrollTo(0, 0);
 }
 
+function changeMonth(dir) {
+  const next = currentMonthIdx + dir;
+  if (next < 0 || next >= orderedMonths.length) return;
+  currentMonthIdx = next;
+  renderCurrentMonth();
+}
+
 // ---- CSV Parser ----
-// Handles quoted fields (commas and newlines inside quotes)
 function parseCSV(text) {
   const rows = [];
   let row = [], field = '', inQ = false;
@@ -302,29 +365,16 @@ function parseCSV(text) {
 function csvToEvents(csv) {
   const rows = parseCSV(csv);
   if (rows.length < 2) return { events: [], noClass: [] };
-
-  // Normalize header names: lowercase, trim
   const headers = rows[0].map(h => h.toLowerCase().trim());
   const col = name => headers.indexOf(name);
-
-  const iDate     = col('date');
-  const iTitle    = col('title');
-  const iDesc     = col('desc');
-  const iType     = col('type');
-  const iDetails  = col('details');
-  const iTime     = col('time');
-  const iVenue    = col('venue');
-  const iAudience = col('audience');
-  const iContact  = col('contact');
-  const iNoClass  = col('no_class');  // "yes" or "1" marks no-class dates
-
+  const iDate=col('date'), iTitle=col('title'), iDesc=col('desc'), iType=col('type'),
+        iDetails=col('details'), iTime=col('time'), iVenue=col('venue'),
+        iAudience=col('audience'), iContact=col('contact'), iNoClass=col('no_class');
   const events = [], noClass = [];
-
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
     const date = iDate >= 0 ? r[iDate] : '';
     if (!date || !date.match(/^\d{4}-\d{2}-\d{2}$/)) continue;
-
     const ev = {
       date,
       title:    iTitle    >= 0 ? r[iTitle]    : '',
@@ -336,16 +386,12 @@ function csvToEvents(csv) {
       audience: iAudience >= 0 ? r[iAudience] : '',
       contact:  iContact  >= 0 ? r[iContact]  : '',
     };
-
     if (ev.title) events.push(ev);
-
-    // Mark no-class if the no_class column says yes/1/true
     if (iNoClass >= 0) {
-      const v = r[iNoClass].toLowerCase().trim();
+      const v = (r[iNoClass] || '').toLowerCase().trim();
       if (v === 'yes' || v === '1' || v === 'true') noClass.push(date);
     }
   }
-
   return { events, noClass };
 }
 
@@ -356,7 +402,6 @@ function renderEventDetail(ev) {
   const fullDate = dateObj.toLocaleDateString('en-PH', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
   const isNoClass = noClassSet.has(ev.date);
   const sameDay   = (eventsByDate[ev.date] || []).filter(e => e.title !== ev.title);
-
   let rows = '';
   if (ev.time)     rows += infoRow('Time', ev.time);
   if (ev.venue)    rows += infoRow('Venue', ev.venue);
@@ -365,14 +410,12 @@ function renderEventDetail(ev) {
   if (isNoClass)   rows += `<div class="ev-row"><div class="ev-row-label">Classes</div><div class="ev-row-value"><span class="no-class-notice">🚫 No classes on this date</span></div></div>`;
   if (ev.desc && !ev.details) rows += infoRow('Summary', ev.desc);
   if (ev.details)  rows += `<div class="ev-row"><div class="ev-row-label">Details</div><div class="ev-row-value details-text">${escHtml(ev.details)}</div></div>`;
-
   let related = '';
   if (sameDay.length) {
     related = `<div class="ev-related"><h4>Also on this date</h4>` +
       sameDay.map(e => `<div class="ev-related-item" onclick='openEvent(${JSON.stringify(e)})'><div class="ev-related-dot ${typeColors[e.type]||'dot-other'}"></div><span class="ev-related-title">${escHtml(e.title)}</span><span class="ev-related-arrow">›</span></div>`).join('') +
     `</div>`;
   }
-
   card.innerHTML = `
     <div class="ev-banner type-${ev.type||'other'}">
       <div class="ev-type-pill ${tagClass[ev.type]||'tag-other'}">${typeIcon[ev.type]||'📌'} ${typeLabel[ev.type]||'Info'}</div>
@@ -409,15 +452,7 @@ function buildMonth(ym) {
   const block = document.createElement('div');
   block.className = 'month-block' + (isCurrentMonth ? ' current-month' : '');
 
-  const hdr = document.createElement('div');
-  hdr.className = 'month-header' + (isCurrentMonth ? ' current-month-header' : '');
-  hdr.innerHTML = `
-    <span class="month-label">${MONTHS_LONG[m-1]} ${y}</span>
-    ${isCurrentMonth ? '<span class="current-badge">This Month</span>' : ''}
-    ${monthEvents.length ? `<span class="month-count">${monthEvents.length} event${monthEvents.length>1?'s':''}</span>` : ''}
-  `;
-  block.appendChild(hdr);
-
+  // Calendar grid
   const grid = document.createElement('div');
   grid.className = 'cal-grid';
   const dowRow = document.createElement('div');
@@ -457,6 +492,7 @@ function buildMonth(ym) {
   grid.appendChild(daysRow);
   block.appendChild(grid);
 
+  // Events list
   if (monthEvents.length) {
     const evSection = document.createElement('div');
     evSection.className = 'events-section';
@@ -480,34 +516,60 @@ function buildMonth(ym) {
       evSection.appendChild(item);
     });
     block.appendChild(evSection);
-  }
-  return block;
-}
-
-function renderCalendar() {
-  const feed = document.getElementById('calendar-feed');
-  feed.innerHTML = '';
-  const todayYM = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
-  const currentIdx = MONTHS_TO_SHOW.indexOf(todayYM);
-  let ordered;
-  if (currentIdx === -1) {
-    ordered = MONTHS_TO_SHOW.filter(ym => ym >= todayYM);
-    if (!ordered.length) ordered = MONTHS_TO_SHOW;
   } else {
-    ordered = [MONTHS_TO_SHOW[currentIdx], ...MONTHS_TO_SHOW.slice(currentIdx + 1)];
+    const msg = document.createElement('div');
+    msg.className = 'no-events-msg';
+    msg.textContent = 'No events scheduled this month.';
+    block.appendChild(msg);
   }
-  ordered.forEach(ym => feed.appendChild(buildMonth(ym)));
 
+  // Legend
   const legend = document.createElement('div');
   legend.className = 'legend';
   legend.innerHTML = Object.entries(typeLabel).map(([k,v]) =>
     `<div class="legend-item"><div class="legend-dot ${typeColors[k]}"></div><span>${v}</span></div>`
   ).join('') + `<div class="legend-item"><div class="legend-dot" style="background:#fdecea;border:1px solid #e74c3c;"></div><span>No Class</span></div>`;
-  feed.appendChild(legend);
+  block.appendChild(legend);
+
+  return block;
 }
 
-// ---- Show loading state ----
+// ---- Render the current month ----
+function renderCurrentMonth() {
+  const feed = document.getElementById('calendar-feed');
+  const ym = orderedMonths[currentMonthIdx];
+  const [y, m] = ym.split('-').map(Number);
+
+  // Update nav label
+  document.getElementById('nav-month-name').textContent = MONTHS_LONG[m-1];
+  document.getElementById('nav-year').textContent = y;
+
+  // Update prev/next buttons
+  document.getElementById('btn-prev').disabled = currentMonthIdx === 0;
+  document.getElementById('btn-next').disabled = currentMonthIdx === orderedMonths.length - 1;
+
+  // Update dots
+  const dotsEl = document.getElementById('nav-dots');
+  dotsEl.innerHTML = '';
+  orderedMonths.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'nav-dot' + (i === currentMonthIdx ? ' active' : '');
+    dot.onclick = () => { currentMonthIdx = i; renderCurrentMonth(); };
+    dotsEl.appendChild(dot);
+  });
+
+  // Render month block
+  feed.innerHTML = '';
+  feed.appendChild(buildMonth(ym));
+}
+
+// ---- Loading/error/setup UI ----
 function showLoading() {
+  document.getElementById('nav-month-name').textContent = '';
+  document.getElementById('nav-year').textContent = '';
+  document.getElementById('nav-dots').innerHTML = '';
+  document.getElementById('btn-prev').disabled = true;
+  document.getElementById('btn-next').disabled = true;
   document.getElementById('calendar-feed').innerHTML = `
     <div class="state-box">
       <div class="spinner"></div>
@@ -516,7 +578,6 @@ function showLoading() {
     </div>`;
 }
 
-// ---- Show error state ----
 function showError(msg) {
   document.getElementById('calendar-feed').innerHTML = `
     <div class="state-box">
@@ -526,7 +587,6 @@ function showError(msg) {
     </div>`;
 }
 
-// ---- Show setup guide (no URL set yet) ----
 function showSetupGuide() {
   document.getElementById('calendar-feed').innerHTML = `
     <div class="state-box" style="text-align:left;max-width:560px;margin:0 auto;">
@@ -535,34 +595,18 @@ function showSetupGuide() {
       <p style="margin-bottom:1rem;">Follow these steps once, then just edit your sheet forever:</p>
       <ol style="padding-left:1.25rem;font-size:0.88rem;color:var(--text);line-height:2;">
         <li>Open <a href="https://sheets.google.com" target="_blank">Google Sheets</a> and create a new sheet.</li>
-        <li>Set the <strong>first row</strong> as headers (exact spelling matters):<br>
+        <li>Set the <strong>first row</strong> as headers:<br>
           <code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:0.82rem;">date, title, desc, type, time, venue, audience, contact, details, no_class</code>
         </li>
-        <li>Fill in your events — one row per event. See column guide below.</li>
+        <li>Fill in your events — one row per event.</li>
         <li>Click <strong>File → Share → Publish to web</strong>.</li>
-        <li>Under "Link", choose the sheet name and select <strong>Comma-separated values (.csv)</strong>.</li>
-        <li>Click <strong>Publish</strong> and copy the URL.</li>
-        <li>Open this HTML file, find <code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;">PASTE_YOUR_CSV_URL_HERE</code> and replace it with your URL.</li>
+        <li>Choose your sheet and select <strong>Comma-separated values (.csv)</strong>.</li>
+        <li>Click <strong>Publish</strong>, copy the URL, and paste it into <code>SHEET_CSV_URL</code> in this file.</li>
       </ol>
-      <hr style="margin:1.25rem 0;border:none;border-top:1px solid var(--border);">
-      <p style="font-size:0.82rem;font-weight:600;margin-bottom:0.5rem;">Column guide:</p>
-      <table style="font-size:0.8rem;width:100%;border-collapse:collapse;">
-        <tr style="background:#f7f6f2;"><th style="padding:5px 8px;text-align:left;border:1px solid var(--border);">Column</th><th style="padding:5px 8px;text-align:left;border:1px solid var(--border);">Required?</th><th style="padding:5px 8px;text-align:left;border:1px solid var(--border);">Example</th></tr>
-        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>date</code></td><td style="padding:5px 8px;border:1px solid var(--border);">✅ Yes</td><td style="padding:5px 8px;border:1px solid var(--border);">2026-03-15</td></tr>
-        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>title</code></td><td style="padding:5px 8px;border:1px solid var(--border);">✅ Yes</td><td style="padding:5px 8px;border:1px solid var(--border);">Science Fair</td></tr>
-        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>type</code></td><td style="padding:5px 8px;border:1px solid var(--border);">✅ Yes</td><td style="padding:5px 8px;border:1px solid var(--border);">holiday / exam / activity / meeting / other</td></tr>
-        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>desc</code></td><td style="padding:5px 8px;border:1px solid var(--border);">Optional</td><td style="padding:5px 8px;border:1px solid var(--border);">Short one-liner for the list</td></tr>
-        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>time</code></td><td style="padding:5px 8px;border:1px solid var(--border);">Optional</td><td style="padding:5px 8px;border:1px solid var(--border);">8:00 AM – 12:00 PM</td></tr>
-        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>venue</code></td><td style="padding:5px 8px;border:1px solid var(--border);">Optional</td><td style="padding:5px 8px;border:1px solid var(--border);">Covered Court</td></tr>
-        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>audience</code></td><td style="padding:5px 8px;border:1px solid var(--border);">Optional</td><td style="padding:5px 8px;border:1px solid var(--border);">All Grade Levels</td></tr>
-        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>contact</code></td><td style="padding:5px 8px;border:1px solid var(--border);">Optional</td><td style="padding:5px 8px;border:1px solid var(--border);">Guidance Office</td></tr>
-        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>details</code></td><td style="padding:5px 8px;border:1px solid var(--border);">Optional</td><td style="padding:5px 8px;border:1px solid var(--border);">Long description for the detail page</td></tr>
-        <tr><td style="padding:5px 8px;border:1px solid var(--border);"><code>no_class</code></td><td style="padding:5px 8px;border:1px solid var(--border);">Optional</td><td style="padding:5px 8px;border:1px solid var(--border);">yes (or leave blank)</td></tr>
-      </table>
     </div>`;
 }
 
-// ---- Main: load from Google Sheet ----
+// ---- Main ----
 async function init() {
   if (!SHEET_CSV_URL || SHEET_CSV_URL === 'PASTE_YOUR_CSV_URL_HERE') {
     showSetupGuide();
@@ -578,7 +622,7 @@ async function init() {
     const { events, noClass } = csvToEvents(csv);
 
     if (!events.length) {
-      showError('Your sheet loaded but no valid events were found. Make sure your header row uses the exact column names shown in the setup guide.');
+      showError('Your sheet loaded but no valid events were found. Make sure your header row uses the exact column names.');
       return;
     }
 
@@ -589,13 +633,24 @@ async function init() {
     });
     noClassSet = new Set(noClass);
 
-    renderCalendar();
+    // Determine display order — start from current month, only show present + future
+    const todayYM = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0');
+    const currentIdx = MONTHS_TO_SHOW.indexOf(todayYM);
+    if (currentIdx === -1) {
+      orderedMonths = MONTHS_TO_SHOW.filter(ym => ym >= todayYM);
+      if (!orderedMonths.length) orderedMonths = MONTHS_TO_SHOW;
+    } else {
+      orderedMonths = MONTHS_TO_SHOW.slice(currentIdx);
+    }
+
+    currentMonthIdx = 0;
+    renderCurrentMonth();
 
   } catch (err) {
     showError(
       `Could not fetch the sheet. Common causes:<br><br>
       • The CSV URL is wrong or not yet published<br>
-      • You published the sheet but selected the wrong format (must be <strong>CSV</strong>, not HTML)<br>
+      • You selected the wrong format (must be <strong>CSV</strong>, not HTML)<br>
       • A browser extension is blocking the request<br><br>
       Error: <code>${err.message}</code>`
     );
