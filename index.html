@@ -178,15 +178,14 @@
     margin-top: 2px; letter-spacing: 0;
   }
 
-  /* Dot indicators */
+    /* Dot indicators */
   .nav-dots {
     display: flex; justify-content: center;
     gap: 6px; margin-bottom: 1rem;
     flex-wrap: wrap;
   }
   .nav-dot {
-    /* Bigger tap area for dots */
-    width: 28px; height: 28px;
+    width: 28px; height: 28px; /* Desktop size */
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
@@ -195,12 +194,18 @@
   .nav-dot::after {
     content: '';
     display: block;
-    width: 7px; height: 7px;
+    width: 7px; height: 7px; /* Desktop dot size */
     border-radius: 50%;
     background: var(--border);
     transition: background 0.15s, transform 0.15s;
   }
   .nav-dot.active::after { background: var(--primary); transform: scale(1.35); }
+
+  /* MOBILE FIX: Smaller dots on small screens */
+  @media (max-width: 480px) {
+    .nav-dot { width: 20px; height: 20px; }
+    .nav-dot::after { width: 5px; height: 5px; }
+  }
 
   /* ============================================================
      LOADING / ERROR STATES
