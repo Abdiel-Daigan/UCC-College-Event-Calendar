@@ -573,9 +573,11 @@
      STEP 1 — EDIT YOUR SCHOOL INFO HERE
      ============================================================ -->
 <script>
-const SCHOOL_NAME     = "Unida Christian Colleges";
-const SCHOOL_SUBTITLE = "School Year 2025–2026 Calendar";
-const SCHOOL_INITIALS = "UCC";
+const SCHOOL_NAME       = "Unida Christian Colleges";
+const SCHOOL_SUBTITLE   = "School Year 2025–2026 Calendar";
+const SCHOOL_LOGO_URL    = "ucc-logo.png"; // Paste image link here (e.g., "https://...logo.png"). Leave empty to use text.
+const COUNCIL_LOGO_URL   = "csc-logo.png"; // Paste student council logo link here. Leave empty if not used.
+const FALLBACK_INITIALS  = "UCC";
 </script>
 
 <!-- ============================================================
@@ -599,12 +601,12 @@ const MONTHS_TO_SHOW = [
      ============================================================ -->
 
 <header>
-  <div class="header-logo" id="hdr-initials" onclick="goHome()"></div>
+  <div class="header-logo" id="hdr-logo" onclick="goHome()"></div>
   <div class="header-text">
     <h1 id="hdr-name" onclick="goHome()"></h1>
     <p id="hdr-sub"></p>
   </div>
-  <div class="header-year-badge" id="hdr-year"></div>
+  <div class="header-council-logo" id="hdr-council" onclick="goHome()"></div>
 </header>
 
 <div id="view-calendar">
@@ -645,10 +647,28 @@ const MONTHS_TO_SHOW = [
 
 <script>
 // ---- Static text ----
-document.getElementById('hdr-initials').textContent = SCHOOL_INITIALS;
+const logoEl = document.getElementById('hdr-logo');
+const councilEl = document.getElementById('hdr-council');
+
+// Helper to set logo (img or text)
+function setLogo(el, url, fallbackText) {
+  if (url && url.trim() !== "") {
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = "Logo";
+    el.innerHTML = '';
+    el.appendChild(img);
+  } else {
+    el.innerHTML = `<span>${fallbackText}</span>`;
+  }
+}
+
+setLogo(logoEl, SCHOOL_LOGO_URL, FALLBACK_INITIALS);
+setLogo(councilEl, COUNCIL_LOGO_URL, "CS");
+
 document.getElementById('hdr-name').textContent     = SCHOOL_NAME;
 document.getElementById('hdr-sub').textContent      = SCHOOL_SUBTITLE;
-document.getElementById('hdr-year').textContent     = SCHOOL_SUBTITLE;
+document.getElementById('hdr-year').textContent      = SCHOOL_SUBTITLE;
 document.getElementById('footer-name').textContent  = SCHOOL_NAME;
 document.getElementById('footer-year').textContent  = new Date().getFullYear();
 
