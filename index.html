@@ -564,6 +564,109 @@
      SWIPE SUPPORT (touch events handled in JS)
      ============================================================ */
   #calendar-feed { touch-action: pan-y; }
+
+  /* ============================================================
+     LAYOUT — CALENDAR + FACEBOOK SIDEBAR
+     ============================================================ */
+  .cal-layout {
+    max-width: 1120px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-start;
+    gap: clamp(1rem, 2vw, 1.75rem);
+    padding: 0 var(--pad-x);
+  }
+  /* On desktop the calendar no longer needs its own auto margins/padding-x
+     because the layout wrapper handles centering and horizontal padding. */
+  .cal-layout #cal-main {
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* ============================================================
+     FACEBOOK SIDEBAR
+     ============================================================ */
+  .fb-sidebar {
+    flex: 0 0 360px;
+    width: 360px;
+    position: sticky;
+    top: 84px;               /* clears the sticky header */
+    padding-top: var(--pad-y);
+  }
+  .fb-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  }
+  .fb-card-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0.8rem 1rem;
+    background: var(--primary);
+    color: #fff;
+  }
+  .fb-card-head svg { width: 20px; height: 20px; flex-shrink: 0; }
+  .fb-card-head-text { min-width: 0; }
+  .fb-card-head-text h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 0.98rem; font-weight: 600; letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+  .fb-card-head-text p {
+    font-size: 0.7rem; opacity: 0.8; margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .fb-embed-wrap {
+    /* keeps the iframe responsive within the fixed sidebar width */
+    width: 100%;
+    background: var(--bg);
+    min-height: 500px;
+  }
+  .fb-embed-wrap iframe {
+    display: block;
+    width: 100% !important;
+    border: none;
+  }
+  .fb-fallback {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  .fb-fallback a {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .fb-fallback a:hover { text-decoration: underline; }
+
+  /* Stack the feed below the calendar on smaller screens */
+  @media (max-width: 960px) {
+    .cal-layout {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      padding: 0;
+    }
+    .cal-layout #cal-main {
+      padding-left: var(--pad-x);
+      padding-right: var(--pad-x);
+    }
+    .fb-sidebar {
+      position: static;
+      width: auto;
+      flex: none;
+      padding: 0 var(--pad-x) 3rem;
+      top: auto;
+    }
+    /* Trim the calendar's big bottom padding since the feed follows it */
+    .cal-layout #cal-main { padding-bottom: 1.5rem; }
+  }
 </style>
 </head>
 <body>
@@ -572,7 +675,7 @@
      STEP 1 — EDIT YOUR SCHOOL INFO HERE
      ============================================================ -->
 <script>
-const SCHOOL_NAME     = "Unida Christian Colleges";
+const SCHOOL_NAME     = "The UCC - College Department";
 const SCHOOL_SUBTITLE = "School Year 2026–2027 Calendar";
 const SCHOOL_INITIALS = "UCC";
 const SCHOOL_LOGO     = "ucc-logo.png";
@@ -595,6 +698,14 @@ const MONTHS_TO_SHOW = [
 </script>
 
 <!-- ============================================================
+     STEP 4 — PASTE YOUR DEPARTMENT FACEBOOK PAGE URL HERE
+     (e.g. "https://www.facebook.com/YourDepartmentPage")
+     ============================================================ -->
+<script>
+const FB_PAGE_URL = "https://www.facebook.com/profile.php?id=61574397106560";
+</script>
+
+<!-- ============================================================
      HTML — DO NOT EDIT BELOW
      ============================================================ -->
 
@@ -608,28 +719,50 @@ const MONTHS_TO_SHOW = [
 </header>
 
 <div id="view-calendar">
-  <main id="cal-main">
-    <div class="today-chip">
-      <div class="today-dot"></div>
-      <span id="today-label"></span>
-    </div>
-
-    <!-- Month navigation -->
-    <div class="month-nav">
-      <button class="nav-btn" id="btn-prev" onclick="changeMonth(-1)" title="Previous month">&#8592;</button>
-      <div class="nav-month-label">
-        <span id="nav-month-name"></span>
-        <span class="nav-year" id="nav-year"></span>
+  <div class="cal-layout">
+    <main id="cal-main">
+      <div class="today-chip">
+        <div class="today-dot"></div>
+        <span id="today-label"></span>
       </div>
-      <button class="nav-btn" id="btn-next" onclick="changeMonth(1)" title="Next month">&#8594;</button>
-    </div>
 
-    <!-- Dot indicators -->
-    <div class="nav-dots" id="nav-dots"></div>
+      <!-- Month navigation -->
+      <div class="month-nav">
+        <button class="nav-btn" id="btn-prev" onclick="changeMonth(-1)" title="Previous month">&#8592;</button>
+        <div class="nav-month-label">
+          <span id="nav-month-name"></span>
+          <span class="nav-year" id="nav-year"></span>
+        </div>
+        <button class="nav-btn" id="btn-next" onclick="changeMonth(1)" title="Next month">&#8594;</button>
+      </div>
 
-    <!-- Single month display -->
-    <div id="calendar-feed"></div>
-  </main>
+      <!-- Dot indicators -->
+      <div class="nav-dots" id="nav-dots"></div>
+
+      <!-- Single month display -->
+      <div id="calendar-feed"></div>
+    </main>
+
+    <!-- ============================================================
+         FACEBOOK DEPARTMENT PAGE FEED (right sidebar)
+         ============================================================ -->
+    <aside class="fb-sidebar" aria-label="Department Facebook page updates">
+      <div class="fb-card">
+        <div class="fb-card-head">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07Z"/>
+          </svg>
+          <div class="fb-card-head-text">
+            <h2>Department Updates</h2>
+            <p>Latest posts from our Facebook page</p>
+          </div>
+        </div>
+        <div class="fb-embed-wrap" id="fb-embed-wrap">
+          <div class="fb-fallback">Loading latest posts…</div>
+        </div>
+      </div>
+    </aside>
+  </div>
   <footer>
     <p>© <span id="footer-year"></span> <strong id="footer-name"></strong> — School Events Calendar</p>
     <p style="margin-top:4px;opacity:0.6;">For concerns, contact the UCC College Student Council.</p>
@@ -652,6 +785,61 @@ document.getElementById('hdr-sub').textContent      = SCHOOL_SUBTITLE;
 document.getElementById('hdr-year').textContent     = SCHOOL_SUBTITLE;
 document.getElementById('footer-name').textContent  = SCHOOL_NAME;
 document.getElementById('footer-year').textContent  = new Date().getFullYear();
+
+// ---- Facebook department page feed (official Page Plugin iframe) ----
+(function initFacebookFeed() {
+  const wrap = document.getElementById('fb-embed-wrap');
+  if (!wrap) return;
+
+  const url = (typeof FB_PAGE_URL === 'string') ? FB_PAGE_URL.trim() : '';
+  const isConfigured = url && !/YourDepartmentPage/i.test(url);
+
+  if (!isConfigured) {
+    wrap.innerHTML =
+      '<div class="fb-fallback">' +
+      'Facebook feed not set up yet.<br>' +
+      'Add your department Page URL in <strong>STEP 4</strong> at the top of this file.' +
+      '</div>';
+    return;
+  }
+
+  // Width adapts to the sidebar (desktop) or full column (mobile).
+  const measured = wrap.clientWidth || 340;
+  const width = Math.max(280, Math.min(500, measured));
+  const height = 640;
+
+  const src =
+    'https://www.facebook.com/plugins/page.php' +
+    '?href=' + encodeURIComponent(url) +
+    '&tabs=timeline' +
+    '&width=' + width +
+    '&height=' + height +
+    '&small_header=false' +
+    '&adapt_container_width=true' +
+    '&hide_cover=false' +
+    '&show_facepile=true';
+
+  const iframe = document.createElement('iframe');
+  iframe.src = src;
+  iframe.width = width;
+  iframe.height = height;
+  iframe.title = 'Department Facebook page timeline';
+  iframe.style.height = height + 'px';
+  iframe.setAttribute('scrolling', 'no');
+  iframe.setAttribute('frameborder', '0');
+  iframe.setAttribute('allowfullscreen', 'true');
+  iframe.setAttribute('allow', 'clipboard-write; encrypted-media; picture-in-picture; web-share');
+
+  // Graceful fallback link in case the plugin is blocked.
+  iframe.addEventListener('error', function () {
+    wrap.innerHTML =
+      '<div class="fb-fallback">Couldn\'t load the feed here.<br>' +
+      '<a href="' + url + '" target="_blank" rel="noopener">Open our Facebook page →</a></div>';
+  });
+
+  wrap.innerHTML = '';
+  wrap.appendChild(iframe);
+})();
 
 const today = new Date();
 today.setHours(0,0,0,0);
