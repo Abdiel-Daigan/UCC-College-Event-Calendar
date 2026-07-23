@@ -569,32 +569,37 @@
      LAYOUT — CALENDAR + FACEBOOK SIDEBAR
      ============================================================ */
   .cal-layout {
-    max-width: 1120px;
-    margin: 0 auto;
-    display: flex;
-    align-items: flex-start;
-    gap: clamp(1rem, 2vw, 1.75rem);
-    padding: 0 var(--pad-x);
+    /* No flex row on desktop: the calendar centers itself in the viewport
+       while the Facebook sidebar is pinned (fixed) to the right edge. */
+    display: block;
+    /* Reserve room on the right for the fixed sidebar so the centered
+       calendar never slides underneath it. */
+    padding-right: clamp(390px, 26vw, 430px);
   }
-  /* On desktop the calendar no longer needs its own auto margins/padding-x
-     because the layout wrapper handles centering and horizontal padding. */
+  /* Calendar stays centered in the page using its own max-width + auto margins. */
   .cal-layout #cal-main {
-    margin: 0;
-    padding-left: 0;
-    padding-right: 0;
-    flex: 1 1 auto;
-    min-width: 0;
+    max-width: 680px;
+    margin: 0 auto;
+    padding-left: var(--pad-x);
+    padding-right: var(--pad-x);
   }
 
   /* ============================================================
      FACEBOOK SIDEBAR
      ============================================================ */
   .fb-sidebar {
-    flex: 0 0 360px;
     width: 360px;
-    position: sticky;
+    /* Fixed to the right edge just like the sticky header bar,
+       so it stays in place while the calendar scrolls. */
+    position: fixed;
     top: 84px;               /* clears the sticky header */
-    padding-top: var(--pad-y);
+    right: clamp(1rem, 3vw, 2.5rem);
+    /* Compact card sized to its content (top few posts) — no long
+       scrollable feed. Fall back to internal scroll only if it would
+       exceed the viewport. */
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    z-index: 90;
   }
   .fb-card {
     background: var(--white);
@@ -644,6 +649,19 @@
     text-decoration: none;
   }
   .fb-fallback a:hover { text-decoration: underline; }
+  /* "See all posts" link shown under the compact post preview */
+  .fb-seeall {
+    display: block;
+    text-align: center;
+    padding: 0.7rem 1rem;
+    border-top: 1px solid var(--border);
+    background: var(--white);
+    color: var(--primary);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .fb-seeall:hover { text-decoration: underline; }
 
   /* Stack the feed below the calendar on smaller screens */
   @media (max-width: 960px) {
