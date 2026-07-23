@@ -68,8 +68,16 @@
     font-family: 'Fraunces', serif;
     font-size: 17px; font-weight: 600;
     flex-shrink: 0; cursor: pointer;
+    overflow: hidden;
     /* Finger-friendly tap area */
     -webkit-tap-highlight-color: transparent;
+  }
+  .header-logo img {
+    width: 100%; height: 100%;
+    /* Logo is a tall/portrait PNG (734x979) with a transparent background,
+       so we pad it slightly and use contain so it isn't cropped */
+    object-fit: contain;
+    padding: 4px;
   }
 
   .header-text { min-width: 0; flex: 1; }
@@ -571,6 +579,7 @@
 const SCHOOL_NAME     = "Unida Christian Colleges";
 const SCHOOL_SUBTITLE = "School Year 2026–2027 Calendar";
 const SCHOOL_INITIALS = "UCC";
+const SCHOOL_LOGO     = "ucc-logo.png";
 </script>
 
 <!-- ============================================================
@@ -640,7 +649,8 @@ const MONTHS_TO_SHOW = [
 
 <script>
 // ---- Static text ----
-document.getElementById('hdr-initials').textContent = SCHOOL_INITIALS;
+document.getElementById('hdr-initials').innerHTML =
+  `<img src="${SCHOOL_LOGO}" alt="${SCHOOL_INITIALS} Logo" onerror="this.parentElement.textContent='${SCHOOL_INITIALS}';">`;
 document.getElementById('hdr-name').textContent     = SCHOOL_NAME;
 document.getElementById('hdr-sub').textContent      = SCHOOL_SUBTITLE;
 document.getElementById('hdr-year').textContent     = SCHOOL_SUBTITLE;
