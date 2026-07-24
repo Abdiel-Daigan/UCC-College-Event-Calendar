@@ -114,6 +114,7 @@
      ============================================================ */
   #cal-main {
     max-width: 680px;
+    margin: 0 auto;
     padding: var(--pad-y) var(--pad-x) 4rem;
   }
 
@@ -565,41 +566,29 @@
   #calendar-feed { touch-action: pan-y; }
 
   /* ============================================================
-     LAYOUT — CALENDAR + FACEBOOK SIDEBAR
+     LAYOUT — CALENDAR + FACEBOOK SIDEBAR (stacked, centered)
      ============================================================ */
   .cal-layout {
-    /* Calendar + sidebar sit side-by-side as a normal flex row and are
-       centered together as a group on the page — no fixed positioning,
-       so nothing pushes the calendar off-center. */
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    gap: clamp(1rem, 3vw, 2rem);
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 var(--pad-x);
+    flex-direction: column;
+    align-items: center;
   }
-  /* Calendar column: lets the fluid width take over, can shrink a bit on
-     medium screens before the layout stacks at the 960px breakpoint. */
   .cal-layout #cal-main {
-    flex: 1 1 680px;
-    min-width: 0;
-    padding-left: 0;
-    padding-right: 0;
+    max-width: 680px;
+    margin: 0 auto;
+    width: 100%;
+    padding-left: var(--pad-x);
+    padding-right: var(--pad-x);
   }
 
   /* ============================================================
-     FACEBOOK SIDEBAR
+     FACEBOOK SIDEBAR (now a centered block below the calendar)
      ============================================================ */
   .fb-sidebar {
-    width: 340px;
-    flex-shrink: 0;
-    /* Sits in normal document flow now, aligned with the calendar's
-       own top padding so the two columns start at the same line. */
-    margin-top: var(--pad-y);
-    /* Height gets synced to the calendar's rendered height via JS so
-       the compact post preview looks the same size as the calendar. */
-    min-height: 360px;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 0 var(--pad-x) 3rem;
   }
   .fb-card {
     background: var(--white);
@@ -607,16 +596,12 @@
     border-radius: var(--radius);
     overflow: hidden;
     box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-    display: flex;
-    flex-direction: column;
-    height: 100%;
   }
   .fb-card-head {
     display: flex; align-items: center; gap: 8px;
     padding: 0.8rem 1rem;
     background: var(--primary);
     color: #fff;
-    flex-shrink: 0;
   }
   .fb-card-head svg { width: 20px; height: 20px; flex-shrink: 0; }
   .fb-card-head-text { min-width: 0; }
@@ -630,21 +615,13 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .fb-embed-wrap {
-    /* Compact, cropped window onto the timeline: the iframe itself is
-       tall, but this wrapper clips it so only the top few posts show
-       (roughly matched to the calendar's height), instead of a long
-       scrollable feed. */
+    /* keeps the iframe responsive within the sidebar width */
     width: 100%;
     background: var(--bg);
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
-    position: relative;
+    min-height: 500px;
   }
   .fb-embed-wrap iframe {
     display: block;
-    position: absolute;
-    top: 0; left: 0;
     width: 100% !important;
     border: none;
   }
@@ -672,36 +649,8 @@
     font-size: 0.82rem;
     font-weight: 600;
     text-decoration: none;
-    flex-shrink: 0;
   }
   .fb-seeall:hover { text-decoration: underline; }
-
-  /* Stack the feed below the calendar on smaller screens */
-  @media (max-width: 960px) {
-    .cal-layout {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 0;
-      padding: 0;
-      max-width: none;
-    }
-    .cal-layout #cal-main {
-      flex: none;
-      padding-left: var(--pad-x);
-      padding-right: var(--pad-x);
-    }
-    .fb-sidebar {
-      width: auto;
-      flex: none;
-      padding: 0 var(--pad-x) 3rem;
-      margin-top: 0;
-      height: auto !important;
-      min-height: 0;
-    }
-    .fb-embed-wrap { min-height: 420px; }
-    /* Trim the calendar's big bottom padding since the feed follows it */
-    .cal-layout #cal-main { padding-bottom: 1.5rem; }
-  }
 </style>
 </head>
 <body>
@@ -779,11 +728,9 @@ const FB_PAGE_URL = "https://www.facebook.com/profile.php?id=61574397106560";
     </main>
 
     <!-- ============================================================
-         FACEBOOK DEPARTMENT PAGE FEED (right sidebar)
-         Compact preview of the 3 most recent posts — height is
-         synced to the calendar column via JS (see syncFbHeight()).
+         FACEBOOK DEPARTMENT PAGE FEED (below calendar, centered)
          ============================================================ -->
-    <aside class="fb-sidebar" id="fb-sidebar" aria-label="Department Facebook page updates">
+    <aside class="fb-sidebar" aria-label="Department Facebook page updates">
       <div class="fb-card">
         <div class="fb-card-head">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -797,7 +744,6 @@ const FB_PAGE_URL = "https://www.facebook.com/profile.php?id=61574397106560";
         <div class="fb-embed-wrap" id="fb-embed-wrap">
           <div class="fb-fallback">Loading latest posts…</div>
         </div>
-        <a class="fb-seeall" id="fb-seeall" href="#" target="_blank" rel="noopener">See all posts on Facebook →</a>
       </div>
     </aside>
   </div>
@@ -824,43 +770,13 @@ document.getElementById('hdr-year').textContent     = SCHOOL_SUBTITLE;
 document.getElementById('footer-name').textContent  = SCHOOL_NAME;
 document.getElementById('footer-year').textContent  = new Date().getFullYear();
 
-// ---- Keep the Facebook sidebar's height in sync with the calendar ----
-// On desktop the two columns sit side by side, so we measure the
-// rendered calendar column and apply that height to the sidebar,
-// which (combined with overflow:hidden on the embed) crops the
-// Facebook timeline down to roughly its top 3 posts instead of a
-// long scrollable feed. On mobile the columns stack, so we let the
-// sidebar size itself naturally (handled in CSS via the 960px query).
-let fbResizeTimer;
-function syncFbHeight() {
-  const sidebar = document.getElementById('fb-sidebar');
-  const calMain = document.getElementById('cal-main');
-  if (!sidebar || !calMain) return;
-  if (window.innerWidth <= 960) {
-    sidebar.style.height = '';
-    return;
-  }
-  const h = calMain.offsetHeight;
-  if (h > 0) sidebar.style.height = h + 'px';
-}
-window.addEventListener('resize', () => {
-  clearTimeout(fbResizeTimer);
-  fbResizeTimer = setTimeout(syncFbHeight, 150);
-});
-
 // ---- Facebook department page feed (official Page Plugin iframe) ----
 (function initFacebookFeed() {
   const wrap = document.getElementById('fb-embed-wrap');
-  const seeAll = document.getElementById('fb-seeall');
   if (!wrap) return;
 
   const url = (typeof FB_PAGE_URL === 'string') ? FB_PAGE_URL.trim() : '';
   const isConfigured = url && !/YourDepartmentPage/i.test(url);
-
-  if (seeAll) {
-    if (isConfigured) seeAll.href = url;
-    else seeAll.style.display = 'none';
-  }
 
   if (!isConfigured) {
     wrap.innerHTML =
@@ -874,14 +790,7 @@ window.addEventListener('resize', () => {
   // Width adapts to the sidebar (desktop) or full column (mobile).
   const measured = wrap.clientWidth || 340;
   const width = Math.max(280, Math.min(500, measured));
-  // The iframe itself renders the full timeline at a generous height;
-  // the wrapper (.fb-embed-wrap) then crops it down to a compact
-  // preview of just the first few posts, matched to the calendar's
-  // height by syncFbHeight(). Note: the official Facebook Page Plugin
-  // doesn't offer a "show exactly N posts" option — cropping the
-  // rendered height is the closest supported approximation without
-  // standing up a server-side Graph API integration.
-  const height = 1400;
+  const height = 640;
 
   const src =
     'https://www.facebook.com/plugins/page.php' +
@@ -889,10 +798,10 @@ window.addEventListener('resize', () => {
     '&tabs=timeline' +
     '&width=' + width +
     '&height=' + height +
-    '&small_header=true' +
+    '&small_header=false' +
     '&adapt_container_width=true' +
-    '&hide_cover=true' +
-    '&show_facepile=false';
+    '&hide_cover=false' +
+    '&show_facepile=true';
 
   const iframe = document.createElement('iframe');
   iframe.src = src;
@@ -914,10 +823,6 @@ window.addEventListener('resize', () => {
 
   wrap.innerHTML = '';
   wrap.appendChild(iframe);
-
-  // Sync sidebar height once the iframe has had a moment to lay out.
-  setTimeout(syncFbHeight, 50);
-  iframe.addEventListener('load', () => setTimeout(syncFbHeight, 50));
 })();
 
 const today = new Date();
@@ -1191,11 +1096,6 @@ function renderCurrentMonth() {
   // Render month block
   feed.innerHTML = '';
   feed.appendChild(buildMonth(ym));
-
-  // Re-sync the Facebook sidebar height now that the calendar's
-  // rendered height may have changed (different months have a
-  // different number of event rows).
-  requestAnimationFrame(syncFbHeight);
 }
 
 // ---- Loading/error/setup UI ----
@@ -1211,7 +1111,6 @@ function showLoading() {
       <h3>Loading events…</h3>
       <p>Fetching Calendar Data.</p>
     </div>`;
-  requestAnimationFrame(syncFbHeight);
 }
 
 function showError(msg) {
@@ -1221,7 +1120,6 @@ function showError(msg) {
       <h3>Could not load events</h3>
       <p>${msg}</p>
     </div>`;
-  requestAnimationFrame(syncFbHeight);
 }
 
 function showSetupGuide() {
@@ -1241,7 +1139,6 @@ function showSetupGuide() {
         <li>Click <strong>Publish</strong>, copy the URL, and paste it into <code>SHEET_CSV_URL</code> in this file.</li>
       </ol>
     </div>`;
-  requestAnimationFrame(syncFbHeight);
 }
 
 // ---- Main ----
@@ -1285,13 +1182,13 @@ async function init() {
     renderCurrentMonth();
 
   } catch (err) {
-    showError(
-      `Could not fetch the sheet. Common causes:<br><br>
+    showError(`
+      Could not fetch the sheet. Common causes:<br><br>
       • The CSV URL is wrong or not yet published<br>
       • You selected the wrong format (must be <strong>CSV</strong>, not HTML)<br>
       • A browser extension is blocking the request<br><br>
-      Error: <code>${err.message}</code>`
-    );
+      Error: <code>${err.message}</code>
+    `);
   }
 }
 
